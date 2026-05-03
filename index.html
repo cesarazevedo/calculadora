@@ -1,0 +1,483 @@
+<!DOCTYPE html>
+<html lang="pt-BR" data-theme="light">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Calculadora de Notas — IFRN</title>
+  <style>
+    :root {
+      --bg: #f0f4f8;
+      --surface: #ffffff;
+      --border: #e2e8f0;
+      --text: #1e293b;
+      --text-sub: #475569;
+      --text-muted: #94a3b8;
+      --header-bg: #ffffff;
+      --input-bg: #f8fafc;
+      --shadow-sm: 0 1px 3px rgba(0,0,0,.07), 0 1px 2px rgba(0,0,0,.05);
+      --shadow-md: 0 4px 12px rgba(0,0,0,.08);
+      --accent: #3b82f6;
+      --c-green: #10b981; --c-green-light: #ecfdf5; --c-green-border: #a7f3d0; --c-green-text: #065f46;
+      --c-yellow: #f59e0b; --c-yellow-light: #fffbeb; --c-yellow-border: #fde68a; --c-yellow-text: #92400e;
+      --c-red: #ef4444;   --c-red-light: #fef2f2;   --c-red-border: #fecaca;   --c-red-text: #991b1b;
+      --c-blue: #3b82f6;  --c-blue-light: #eff6ff;  --c-blue-border: #bfdbfe;  --c-blue-text: #1e40af;
+    }
+    [data-theme="dark"] {
+      --bg: #0f1117; --surface: #1e2130; --border: #2a2f45;
+      --text: #f1f5f9; --text-sub: #94a3b8; --text-muted: #64748b;
+      --header-bg: #161b2e; --input-bg: #161b2e;
+      --shadow-sm: 0 1px 3px rgba(0,0,0,.3); --shadow-md: 0 4px 12px rgba(0,0,0,.35);
+      --c-green-light: #071f15; --c-green-border: #065f3a; --c-green-text: #6ee7b7;
+      --c-yellow-light: #292010; --c-yellow-border: #78450a; --c-yellow-text: #fcd34d;
+      --c-red-light: #2d0a0a; --c-red-border: #7f1d1d; --c-red-text: #fca5a5;
+      --c-blue-light: #0f1e3a; --c-blue-border: #1e3a6e; --c-blue-text: #93c5fd;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; transition: background .25s, color .25s; }
+
+    /* HEADER */
+    .site-header { background: var(--header-bg); border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 100; box-shadow: var(--shadow-sm); }
+    .header-inner { max-width: 760px; margin: 0 auto; padding: 0 1.5rem; height: 56px; display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
+    .header-left { display: flex; align-items: center; gap: 1rem; }
+    .back-link { display: flex; align-items: center; gap: 0.4rem; font-size: 0.82rem; color: var(--text-sub); text-decoration: none; padding: 0.3rem 0.7rem; border: 1px solid var(--border); border-radius: 8px; transition: color .15s, border-color .15s; }
+    .back-link:hover { color: var(--text); border-color: var(--text-muted); }
+    .header-title { font-size: 0.95rem; font-weight: 700; display: flex; align-items: center; gap: 0.5rem; }
+    .header-title .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); }
+    .theme-btn { background: none; border: 1px solid var(--border); border-radius: 8px; padding: 0.3rem 0.55rem; cursor: pointer; font-size: 1rem; color: var(--text-muted); line-height: 1; }
+
+    /* MAIN */
+    .main { max-width: 760px; margin: 0 auto; padding: 2.5rem 1.5rem 4rem; display: flex; flex-direction: column; gap: 1.25rem; }
+
+    /* CARD BASE */
+    .card { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 1.5rem; box-shadow: var(--shadow-sm); }
+    .card-title { font-size: 0.82rem; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: var(--text-muted); margin-bottom: 1.1rem; display: flex; align-items: center; gap: 0.5rem; }
+
+    /* REGIME TOGGLE */
+    .regime-tabs { display: flex; gap: 0.5rem; }
+    .regime-tab { flex: 1; padding: 0.6rem; border: 2px solid var(--border); border-radius: 10px; background: none; color: var(--text-sub); font-size: 0.82rem; font-weight: 600; cursor: pointer; transition: all .15s; text-align: center; }
+    .regime-tab.active { border-color: var(--accent); background: var(--c-blue-light); color: var(--c-blue-text); }
+
+    /* INPUTS */
+    .inputs-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.75rem; }
+    .input-group { display: flex; flex-direction: column; gap: 0.4rem; }
+    .input-label { font-size: 0.75rem; font-weight: 700; color: var(--text-muted); text-align: center; }
+    .input-label span { display: block; font-size: 0.65rem; font-weight: 400; margin-top: 1px; }
+    .note-input {
+      width: 100%; padding: 0.65rem 0.5rem; text-align: center;
+      font-size: 1.1rem; font-weight: 700; color: var(--text);
+      background: var(--input-bg); border: 2px solid var(--border);
+      border-radius: 10px; outline: none;
+      transition: border-color .15s, background .15s;
+      -moz-appearance: textfield;
+    }
+    .note-input::-webkit-outer-spin-button,
+    .note-input::-webkit-inner-spin-button { -webkit-appearance: none; }
+    .note-input:focus { border-color: var(--accent); background: var(--surface); }
+    .note-input.filled { border-color: var(--accent); }
+
+    /* RESULT */
+    .result-card { border-radius: 14px; padding: 1.25rem 1.5rem; border: 2px solid var(--border); transition: all .3s; }
+    .result-card.aprovado  { background: var(--c-green-light);  border-color: var(--c-green-border); }
+    .result-card.final     { background: var(--c-yellow-light); border-color: var(--c-yellow-border); }
+    .result-card.reprovado { background: var(--c-red-light);    border-color: var(--c-red-border); }
+    .result-card.waiting   { background: var(--bg); }
+    .result-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.75rem; flex-wrap: wrap; gap: 0.5rem; }
+    .result-md-label { font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; color: var(--text-muted); }
+    .result-md-value { font-size: 2.5rem; font-weight: 800; line-height: 1; }
+    .result-card.aprovado  .result-md-value { color: var(--c-green); }
+    .result-card.final     .result-md-value { color: var(--c-yellow); }
+    .result-card.reprovado .result-md-value { color: var(--c-red); }
+    .result-card.waiting   .result-md-value { color: var(--text-muted); }
+    .result-badge { font-size: 0.78rem; font-weight: 700; padding: 0.3rem 0.85rem; border-radius: 999px; }
+    .result-card.aprovado  .result-badge { background: var(--c-green);  color: #fff; }
+    .result-card.final     .result-badge { background: var(--c-yellow); color: #fff; }
+    .result-card.reprovado .result-badge { background: var(--c-red);    color: #fff; }
+    .result-card.waiting   .result-badge { background: var(--border);   color: var(--text-muted); }
+    .result-formula { font-size: 0.78rem; color: var(--text-muted); margin-top: 0.25rem; font-family: 'Courier New', monospace; }
+
+    /* PROGRESS BAR */
+    .progress-wrap { margin-top: 0.85rem; }
+    .progress-bar-bg { height: 8px; background: var(--border); border-radius: 999px; overflow: hidden; }
+    .progress-bar-fill { height: 100%; border-radius: 999px; transition: width .4s ease, background .3s; }
+    .progress-labels { display: flex; justify-content: space-between; margin-top: 0.35rem; font-size: 0.68rem; color: var(--text-muted); }
+
+    /* AF SECTION */
+    .af-section { display: none; }
+    .af-section.visible { display: flex; flex-direction: column; gap: 1.25rem; }
+    .af-needed-box { border-radius: 12px; padding: 1rem 1.2rem; background: var(--c-blue-light); border: 1px solid var(--c-blue-border); }
+    .af-needed-label { font-size: 0.72rem; font-weight: 700; color: var(--c-blue-text); text-transform: uppercase; letter-spacing: .05em; margin-bottom: 0.3rem; }
+    .af-needed-value { font-size: 1.8rem; font-weight: 800; color: var(--c-blue-text); line-height: 1; }
+    .af-needed-sub { font-size: 0.75rem; color: var(--c-blue-text); opacity: .75; margin-top: 0.2rem; }
+    .af-impossible { color: var(--c-red-text) !important; }
+    .af-impossible-box { background: var(--c-red-light) !important; border-color: var(--c-red-border) !important; }
+
+    .af-inputs { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; align-items: end; }
+    .af-input-group { display: flex; flex-direction: column; gap: 0.4rem; }
+    .af-input-label { font-size: 0.75rem; font-weight: 700; color: var(--text-muted); }
+
+    /* MFD TABLE */
+    .mfd-table { width: 100%; border-collapse: collapse; font-size: 0.8rem; }
+    .mfd-table th { text-align: left; padding: 0.4rem 0.6rem; font-size: 0.68rem; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; color: var(--text-muted); border-bottom: 2px solid var(--border); }
+    .mfd-table td { padding: 0.5rem 0.6rem; border-bottom: 1px solid var(--border); color: var(--text-sub); font-family: 'Courier New', monospace; }
+    .mfd-table tr:last-child td { border-bottom: none; }
+    .mfd-table tr.best-row td { color: var(--text); font-weight: 700; }
+    .mfd-table .mfd-val { font-size: 0.9rem; font-weight: 700; text-align: right; }
+    .mfd-table .best-row .mfd-val { color: var(--c-green); }
+    .mfd-result-row { display: flex; align-items: center; justify-content: space-between; padding: 0.75rem 0 0; flex-wrap: wrap; gap: 0.5rem; }
+    .mfd-final-label { font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; color: var(--text-muted); }
+    .mfd-final-value { font-size: 1.6rem; font-weight: 800; }
+    .mfd-final-badge { font-size: 0.78rem; font-weight: 700; padding: 0.3rem 0.85rem; border-radius: 999px; }
+
+    /* FOOTER */
+    .site-footer { text-align: center; padding: 1.5rem 1rem; font-size: 0.72rem; color: var(--text-muted); border-top: 1px solid var(--border); }
+    .legal { font-size: 0.68rem; color: var(--text-muted); text-align: center; margin-top: 0.5rem; }
+
+    /* RESPONSIVE */
+    @media (max-width: 560px) {
+      .main { padding: 1.5rem 1rem 3rem; }
+      .inputs-grid { grid-template-columns: repeat(2, 1fr); }
+      .af-inputs { grid-template-columns: 1fr; }
+      .result-md-value { font-size: 2rem; }
+    }
+  </style>
+</head>
+<body>
+
+<header class="site-header">
+  <div class="header-inner">
+    <div class="header-left">
+      <a class="back-link" href="https://cesarazevedo.github.io">← Início</a>
+      <div class="header-title"><div class="dot"></div>Calculadora de Notas</div>
+    </div>
+    <button class="theme-btn" id="themeBtn">🌙</button>
+  </div>
+</header>
+
+<main class="main">
+
+  <!-- REGIME -->
+  <div class="card">
+    <div class="card-title">🏫 Regime da disciplina</div>
+    <div class="regime-tabs">
+      <button class="regime-tab active" id="tabBimestral" onclick="setRegime('bimestral')">
+        Bimestral / Anual<br><small style="font-weight:400;font-size:.72rem">Art. 335</small>
+      </button>
+      <button class="regime-tab" id="tabBlocos" onclick="setRegime('blocos')">
+        Crédito / Blocos<br><small style="font-weight:400;font-size:.72rem">Art. 336</small>
+      </button>
+    </div>
+  </div>
+
+  <!-- NOTAS BIMESTRAIS -->
+  <div class="card" id="sectionBimestral">
+    <div class="card-title">📝 Notas bimestrais</div>
+    <div class="inputs-grid">
+      <div class="input-group">
+        <div class="input-label">N1 <span>1º Bimestre</span></div>
+        <input class="note-input" id="n1" type="number" min="0" max="100" step="0.1" placeholder="—" oninput="calc()">
+      </div>
+      <div class="input-group">
+        <div class="input-label">N2 <span>2º Bimestre</span></div>
+        <input class="note-input" id="n2" type="number" min="0" max="100" step="0.1" placeholder="—" oninput="calc()">
+      </div>
+      <div class="input-group">
+        <div class="input-label">N3 <span>3º Bimestre</span></div>
+        <input class="note-input" id="n3" type="number" min="0" max="100" step="0.1" placeholder="—" oninput="calc()">
+      </div>
+      <div class="input-group">
+        <div class="input-label">N4 <span>4º Bimestre</span></div>
+        <input class="note-input" id="n4" type="number" min="0" max="100" step="0.1" placeholder="—" oninput="calc()">
+      </div>
+    </div>
+  </div>
+
+  <!-- NOTA EM BLOCO -->
+  <div class="card" id="sectionBlocos" style="display:none">
+    <div class="card-title">📝 Nota da disciplina</div>
+    <div style="max-width:180px">
+      <div class="input-group">
+        <div class="input-label">ND <span>Nota da disciplina</span></div>
+        <input class="note-input" id="nd" type="number" min="0" max="100" step="0.1" placeholder="—" oninput="calc()">
+      </div>
+    </div>
+  </div>
+
+  <!-- RESULTADO MD -->
+  <div class="result-card waiting" id="resultCard">
+    <div class="result-top">
+      <div>
+        <div class="result-md-label">Média da Disciplina (MD)</div>
+        <div class="result-md-value" id="mdValue">—</div>
+        <div class="result-formula" id="mdFormula"></div>
+      </div>
+      <span class="result-badge" id="statusBadge">Aguardando notas</span>
+    </div>
+    <div class="progress-wrap">
+      <div class="progress-bar-bg">
+        <div class="progress-bar-fill" id="progressFill" style="width:0%;background:var(--accent)"></div>
+      </div>
+      <div class="progress-labels">
+        <span>0</span>
+        <span>Mínimo AF: 20</span>
+        <span>Aprovação: 60</span>
+        <span>100</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- SEÇÃO AVALIAÇÃO FINAL -->
+  <div class="af-section" id="afSection">
+
+    <div class="card" id="afNeededCard">
+      <div class="card-title">🎯 Nota mínima na Avaliação Final</div>
+      <div class="af-needed-box" id="afNeededBox">
+        <div class="af-needed-label">NAF mínima para aprovação</div>
+        <div class="af-needed-value" id="afNeededValue">—</div>
+        <div class="af-needed-sub" id="afNeededSub"></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">🧮 Simular nota na Avaliação Final</div>
+      <div class="af-inputs">
+        <div class="af-input-group">
+          <div class="af-input-label">NAF — Nota da Avaliação Final</div>
+          <input class="note-input" id="naf" type="number" min="0" max="100" step="0.1" placeholder="—" oninput="calcAF()">
+        </div>
+      </div>
+
+      <div style="margin-top:1.25rem">
+        <table class="mfd-table" id="mfdTable">
+          <thead>
+            <tr>
+              <th>Fórmula</th>
+              <th style="text-align:right">MFD</th>
+            </tr>
+          </thead>
+          <tbody id="mfdRows"></tbody>
+        </table>
+        <div class="mfd-result-row" id="mfdResultRow" style="display:none">
+          <div>
+            <div class="mfd-final-label">Melhor MFD</div>
+            <div class="mfd-final-value" id="mfdFinalValue">—</div>
+          </div>
+          <span class="mfd-final-badge" id="mfdFinalBadge"></span>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <p class="legal">Cálculo baseado no Art. 335 e 336 da Organização Didática do IFRN. Esta calculadora é apenas uma ferramenta de apoio — consulte sempre o seu professor ou a secretaria acadêmica para situações oficiais.</p>
+
+</main>
+
+<footer class="site-footer">
+  Prof. César Azevedo · IFRN Campus João Câmara
+</footer>
+
+<script>
+  // ── TEMA ──
+  const themeBtn = document.getElementById('themeBtn');
+  const root = document.documentElement;
+  const saved = localStorage.getItem('calc-theme') || 'light';
+  root.setAttribute('data-theme', saved);
+  themeBtn.textContent = saved === 'dark' ? '☀️' : '🌙';
+  themeBtn.addEventListener('click', () => {
+    const next = root.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+    root.setAttribute('data-theme', next);
+    themeBtn.textContent = next === 'dark' ? '☀️' : '🌙';
+    localStorage.setItem('calc-theme', next);
+  });
+
+  // ── REGIME ──
+  let regime = 'bimestral';
+  function setRegime(r) {
+    regime = r;
+    document.getElementById('tabBimestral').classList.toggle('active', r === 'bimestral');
+    document.getElementById('tabBlocos').classList.toggle('active', r === 'blocos');
+    document.getElementById('sectionBimestral').style.display = r === 'bimestral' ? '' : 'none';
+    document.getElementById('sectionBlocos').style.display   = r === 'blocos'     ? '' : 'none';
+    resetResult();
+    calc();
+  }
+
+  function val(id) {
+    const v = parseFloat(document.getElementById(id).value);
+    return isNaN(v) ? null : Math.min(100, Math.max(0, v));
+  }
+
+  function fmt(n) { return n === null ? '—' : n.toFixed(1).replace('.0', ''); }
+
+  function resetResult() {
+    const rc = document.getElementById('resultCard');
+    rc.className = 'result-card waiting';
+    document.getElementById('mdValue').textContent = '—';
+    document.getElementById('mdFormula').textContent = '';
+    document.getElementById('statusBadge').textContent = 'Aguardando notas';
+    document.getElementById('progressFill').style.width = '0%';
+    document.getElementById('progressFill').style.background = 'var(--accent)';
+    document.getElementById('afSection').className = 'af-section';
+    document.getElementById('naf').value = '';
+    document.getElementById('mfdRows').innerHTML = '';
+    document.getElementById('mfdResultRow').style.display = 'none';
+  }
+
+  // ── CÁLCULO PRINCIPAL ──
+  function calc() {
+    if (regime === 'bimestral') calcBimestral();
+    else calcBlocos();
+  }
+
+  function calcBimestral() {
+    const n1 = val('n1'), n2 = val('n2'), n3 = val('n3'), n4 = val('n4');
+    if ([n1,n2,n3,n4].some(v => v === null)) { resetResult(); return; }
+
+    const md = (2*n1 + 2*n2 + 3*n3 + 3*n4) / 10;
+    showMD(md, `MD = (2×${fmt(n1)} + 2×${fmt(n2)} + 3×${fmt(n3)} + 3×${fmt(n4)}) ÷ 10`);
+
+    if (md >= 60) {
+      setStatus('aprovado', '✅ Aprovado');
+      document.getElementById('afSection').className = 'af-section';
+    } else if (md >= 20) {
+      setStatus('final', '⚠️ Direito à Avaliação Final');
+      showAFSection(md, n1, n2, n3, n4);
+    } else {
+      setStatus('reprovado', '❌ Reprovado');
+      document.getElementById('afSection').className = 'af-section';
+    }
+  }
+
+  function calcBlocos() {
+    const nd = val('nd');
+    if (nd === null) { resetResult(); return; }
+
+    const md = nd;
+    showMD(md, `MD = ND = ${fmt(nd)}`);
+
+    if (md >= 60) {
+      setStatus('aprovado', '✅ Aprovado');
+      document.getElementById('afSection').className = 'af-section';
+    } else if (md >= 20) {
+      setStatus('final', '⚠️ Direito à Avaliação Final');
+      showAFSectionBlocos(md);
+    } else {
+      setStatus('reprovado', '❌ Reprovado');
+      document.getElementById('afSection').className = 'af-section';
+    }
+  }
+
+  function showMD(md, formula) {
+    document.getElementById('mdValue').textContent = fmt(md);
+    document.getElementById('mdFormula').textContent = formula;
+    const pct = Math.min(100, (md / 100) * 100);
+    const fill = document.getElementById('progressFill');
+    fill.style.width = pct + '%';
+    fill.style.background = md >= 60 ? 'var(--c-green)' : md >= 20 ? 'var(--c-yellow)' : 'var(--c-red)';
+  }
+
+  function setStatus(cls, text) {
+    const rc = document.getElementById('resultCard');
+    rc.className = 'result-card ' + cls;
+    document.getElementById('statusBadge').textContent = text;
+  }
+
+  // ── SEÇÃO AF (bimestral) ──
+  let _md, _n1, _n2, _n3, _n4;
+  function showAFSection(md, n1, n2, n3, n4) {
+    _md = md; _n1 = n1; _n2 = n2; _n3 = n3; _n4 = n4;
+    document.getElementById('afSection').className = 'af-section visible';
+
+    // Nota mínima: menor NAF que alguma fórmula >= 60
+    const mins = [
+      120 - md,                           // (MD+NAF)/2 >= 60
+      (600 - 2*n2 - 3*n3 - 3*n4) / 2,   // NAF substitui N1
+      (600 - 2*n1 - 3*n3 - 3*n4) / 2,   // NAF substitui N2
+      (600 - 2*n1 - 2*n2 - 3*n4) / 3,   // NAF substitui N3
+      (600 - 2*n1 - 2*n2 - 3*n3) / 3,   // NAF substitui N4
+    ];
+    const minNAF = Math.min(...mins);
+    showNAFNeeded(minNAF);
+    calcAF();
+  }
+
+  // ── SEÇÃO AF (blocos) ──
+  let _mdBlocos;
+  function showAFSectionBlocos(md) {
+    _mdBlocos = md;
+    document.getElementById('afSection').className = 'af-section visible';
+    // MFD = max(NAF, MD) >= 60 → NAF >= 60 (se MD < 60)
+    showNAFNeeded(60);
+    calcAF();
+  }
+
+  function showNAFNeeded(minNAF) {
+    const box = document.getElementById('afNeededBox');
+    const valEl = document.getElementById('afNeededValue');
+    const subEl = document.getElementById('afNeededSub');
+    if (minNAF > 100) {
+      valEl.textContent = 'Impossível';
+      valEl.className = 'af-needed-value af-impossible';
+      subEl.textContent = 'Não é possível alcançar 60 mesmo com nota máxima na AF.';
+      box.className = 'af-needed-box af-impossible-box';
+    } else {
+      const display = Math.max(0, minNAF);
+      valEl.textContent = display % 1 === 0 ? display.toFixed(0) : display.toFixed(1);
+      valEl.className = 'af-needed-value';
+      subEl.textContent = display <= 0 ? 'Qualquer nota na AF garante aprovação.' : 'Nota mínima para atingir MFD ≥ 60.';
+      box.className = 'af-needed-box';
+    }
+  }
+
+  function calcAF() {
+    const naf = val('naf');
+    if (naf === null) {
+      document.getElementById('mfdRows').innerHTML = '';
+      document.getElementById('mfdResultRow').style.display = 'none';
+      return;
+    }
+
+    let formulas;
+    if (regime === 'bimestral') {
+      formulas = [
+        { label: '(MD + NAF) ÷ 2',                                       v: (_md + naf) / 2 },
+        { label: `(2×NAF + 2×N2 + 3×N3 + 3×N4) ÷ 10`,                   v: (2*naf + 2*_n2 + 3*_n3 + 3*_n4) / 10 },
+        { label: `(2×N1 + 2×NAF + 3×N3 + 3×N4) ÷ 10`,                   v: (2*_n1 + 2*naf + 3*_n3 + 3*_n4) / 10 },
+        { label: `(2×N1 + 2×N2 + 3×NAF + 3×N4) ÷ 10`,                   v: (2*_n1 + 2*_n2 + 3*naf + 3*_n4) / 10 },
+        { label: `(2×N1 + 2×N2 + 3×N3 + 3×NAF) ÷ 10`,                   v: (2*_n1 + 2*_n2 + 3*_n3 + 3*naf) / 10 },
+      ];
+    } else {
+      formulas = [
+        { label: 'NAF',  v: naf },
+        { label: 'MD',   v: _mdBlocos },
+      ];
+    }
+
+    const best = Math.max(...formulas.map(f => f.v));
+    const tbody = document.getElementById('mfdRows');
+    tbody.innerHTML = formulas.map(f => {
+      const isBest = Math.abs(f.v - best) < 0.001;
+      return `<tr class="${isBest ? 'best-row' : ''}">
+        <td>${f.label}${isBest ? ' ★' : ''}</td>
+        <td class="mfd-val">${f.v.toFixed(1)}</td>
+      </tr>`;
+    }).join('');
+
+    const mfdEl = document.getElementById('mfdFinalValue');
+    const badgeEl = document.getElementById('mfdFinalBadge');
+    mfdEl.textContent = best.toFixed(1);
+    document.getElementById('mfdResultRow').style.display = 'flex';
+    if (best >= 60) {
+      mfdEl.style.color = 'var(--c-green)';
+      badgeEl.textContent = '✅ Aprovado na AF';
+      badgeEl.style.cssText = 'background:var(--c-green);color:#fff';
+    } else {
+      mfdEl.style.color = 'var(--c-red)';
+      badgeEl.textContent = '❌ Reprovado na AF';
+      badgeEl.style.cssText = 'background:var(--c-red);color:#fff';
+    }
+  }
+</script>
+
+</body>
+</html>
