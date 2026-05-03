@@ -162,6 +162,9 @@
       <button class="regime-tab active" id="tabBimestral" onclick="setRegime('bimestral')">
         Bimestral / Anual<br><small style="font-weight:400;font-size:.72rem">Art. 335</small>
       </button>
+      <button class="regime-tab" id="tabSemestral" onclick="setRegime('semestral')">
+        Semestral<br><small style="font-weight:400;font-size:.72rem">Art. 334</small>
+      </button>
       <button class="regime-tab" id="tabBlocos" onclick="setRegime('blocos')">
         Crédito / Blocos<br><small style="font-weight:400;font-size:.72rem">Art. 336</small>
       </button>
@@ -187,6 +190,21 @@
       <div class="input-group">
         <div class="input-label">N4 <span>4º Bimestre</span></div>
         <input class="note-input" id="n4" type="number" min="0" max="100" step="0.1" placeholder="—" oninput="calc()">
+      </div>
+    </div>
+  </div>
+
+  <!-- NOTAS SEMESTRAIS -->
+  <div class="card" id="sectionSemestral" style="display:none">
+    <div class="card-title">📝 Notas bimestrais</div>
+    <div class="inputs-grid" style="grid-template-columns: repeat(2, 1fr); max-width: 320px;">
+      <div class="input-group">
+        <div class="input-label">N1 <span>1º Bimestre</span></div>
+        <input class="note-input" id="n1s" type="number" min="0" max="100" step="0.1" placeholder="—" oninput="calc()">
+      </div>
+      <div class="input-group">
+        <div class="input-label">N2 <span>2º Bimestre</span></div>
+        <input class="note-input" id="n2s" type="number" min="0" max="100" step="0.1" placeholder="—" oninput="calc()">
       </div>
     </div>
   </div>
@@ -295,8 +313,10 @@
   function setRegime(r) {
     regime = r;
     document.getElementById('tabBimestral').classList.toggle('active', r === 'bimestral');
+    document.getElementById('tabSemestral').classList.toggle('active', r === 'semestral');
     document.getElementById('tabBlocos').classList.toggle('active', r === 'blocos');
     document.getElementById('sectionBimestral').style.display = r === 'bimestral' ? '' : 'none';
+    document.getElementById('sectionSemestral').style.display = r === 'semestral' ? '' : 'none';
     document.getElementById('sectionBlocos').style.display   = r === 'blocos'     ? '' : 'none';
     resetResult();
     calc();
@@ -326,6 +346,7 @@
   // ── CÁLCULO PRINCIPAL ──
   function calc() {
     if (regime === 'bimestral') calcBimestral();
+    else if (regime === 'semestral') calcSemestral();
     else calcBlocos();
   }
 
@@ -382,6 +403,25 @@
     document.getElementById('statusBadge').textContent = text;
   }
 
+  function calcSemestral() {
+    const n1 = val('n1s'), n2 = val('n2s');
+    if (n1 === null || n2 === null) { resetResult(); return; }
+
+    const md = (2*n1 + 3*n2) / 5;
+    showMD(md, `MD = (2×${fmt(n1)} + 3×${fmt(n2)}) ÷ 5`);
+
+    if (md >= 60) {
+      setStatus('aprovado', '✅ Aprovado');
+      document.getElementById('afSection').className = 'af-section';
+    } else if (md >= 20) {
+      setStatus('final', '⚠️ Direito à Avaliação Final');
+      showAFSectionSemestral(md, n1, n2);
+    } else {
+      setStatus('reprovado', '❌ Reprovado');
+      document.getElementById('afSection').className = 'af-section';
+    }
+  }
+
   // ── SEÇÃO AF (bimestral) ──
   let _md, _n1, _n2, _n3, _n4;
   function showAFSection(md, n1, n2, n3, n4) {
@@ -398,6 +438,21 @@
     ];
     const minNAF = Math.min(...mins);
     showNAFNeeded(minNAF);
+    calcAF();
+  }
+
+  // ── SEÇÃO AF (semestral) ──
+  let _n1s, _n2s, _mdSem;
+  function showAFSectionSemestral(md, n1, n2) {
+    _mdSem = md; _n1s = n1; _n2s = n2;
+    document.getElementById('afSection').className = 'af-section visible';
+
+    const mins = [
+      120 - md,                         // (MD+NAF)/2 >= 60
+      (300 - 3*n2) / 2,                 // (2×NAF+3×N2)/5 >= 60
+      (300 - 2*n1) / 3,                 // (2×N1+3×NAF)/5 >= 60
+    ];
+    showNAFNeeded(Math.min(...mins));
     calcAF();
   }
 
@@ -445,6 +500,12 @@
         { label: `(2×N1 + 2×NAF + 3×N3 + 3×N4) ÷ 10`,                   v: (2*_n1 + 2*naf + 3*_n3 + 3*_n4) / 10 },
         { label: `(2×N1 + 2×N2 + 3×NAF + 3×N4) ÷ 10`,                   v: (2*_n1 + 2*_n2 + 3*naf + 3*_n4) / 10 },
         { label: `(2×N1 + 2×N2 + 3×N3 + 3×NAF) ÷ 10`,                   v: (2*_n1 + 2*_n2 + 3*_n3 + 3*naf) / 10 },
+      ];
+    } else if (regime === 'semestral') {
+      formulas = [
+        { label: '(MD + NAF) ÷ 2',             v: (_mdSem + naf) / 2 },
+        { label: `(2×NAF + 3×N2) ÷ 5`,         v: (2*naf + 3*_n2s) / 5 },
+        { label: `(2×N1 + 3×NAF) ÷ 5`,         v: (2*_n1s + 3*naf) / 5 },
       ];
     } else {
       formulas = [
